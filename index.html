@@ -317,19 +317,25 @@
             messagesContainer.innerHTML = '';
             const chat = chatHistory[index];
             if (chat) {
-                if (chat.messages) {
-                    // Update system prompt input if chat has a system message
-                    if (chat.messages[0]?.role === 'system') {
-                        systemPromptInput.value = chat.messages[0].content;
-                        localStorage.setItem('systemPrompt', chat.messages[0].content);
-                    }
-                    // Using a slight delay between messages for smooth animation
-                    chat.messages.forEach((msg, i) => {
-                        setTimeout(() => {
-                            appendMessage(msg.content, msg.role);
-                        }, i * 50); // 50ms delay between each message
-                    });
+                // Ensure system prompt exists at start of messages
+                if (!chat.messages || chat.messages.length === 0 || chat.messages[0]?.role !== 'system') {
+                    const savedPrompt = localStorage.getItem('systemPrompt');
+                    const systemPrompt = (savedPrompt && savedPrompt.trim() !== '') ? savedPrompt : DEFAULT_SYSTEM_PROMPT;
+                    chat.messages = chat.messages || [];
+                    chat.messages.unshift({ role: 'system', content: systemPrompt });
+                    localStorage.setItem('chatHistory', JSON.stringify(chatHistory));
                 }
+                
+                // Update system prompt input
+                systemPromptInput.value = chat.messages[0].content;
+                localStorage.setItem('systemPrompt', chat.messages[0].content);
+                
+                // Using a slight delay between messages for smooth animation
+                chat.messages.forEach((msg, i) => {
+                    setTimeout(() => {
+                        appendMessage(msg.content, msg.role);
+                    }, i * 50); // 50ms delay between each message
+                });
                 // Update model selector to match chat's model
                 if (chat.model) {
                     modelSelector.value = chat.model;
