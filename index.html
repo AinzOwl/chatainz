@@ -1,0 +1,635 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Claude Chat 2025</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://js.puter.com/v2/"></script>
+    <script src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/markdown.js/0.5.0/markdown.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/github-markdown-css/5.8.1/github-markdown-dark.min.css" integrity="sha512-OtEVQKlou4M/GacGwvUl27uo+XNyHfUlMP/furdKClgpkU++3SepORomgRC1uV7qjJ5fnV8ENVt2qXkR8enD1w==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        
+        :root {
+            --sidebar-width: 300px;
+            --primary-gradient: linear-graient(135deg, #3b82f6, #8b5cf6);
+        }
+        
+        * {
+            font-family: 'Inter', sans-serif;
+        }
+        @media (max-width: 767px) {
+            .markdown-body {
+                padding: 15px;
+            }
+        }
+        body {
+            background-color: #0f172a;
+            color: #ffffff;
+        }
+        
+        .chat-container {
+            height: calc(100vh - 180px);
+            overflow-y: auto;
+            scroll-behavior: smooth;
+            padding-bottom: 20px;
+        }
+        
+        .glass-effect {
+            background: rgba(30, 41, 59, 0.7);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .message-bubble {
+            transition: all 0.3s ease;
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        
+        .message-bubble.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        
+        .gradient-button {
+            background: var(--primary-gradient);
+            transition: all 0.3s ease;
+        }
+        
+        .gradient-button:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 15px rgba(59, 130, 246, 0.4);
+        }
+        
+        .gradient-border {
+            border: double 1px transparent;
+            background-image: linear-gradient(#1e293b, #1e293b), var(--primary-gradient);
+            background-origin: border-box;
+            background-clip: padding-box, border-box;
+        }
+        
+        /* Fancy Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: rgba(30, 41, 59, 0.5);
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: linear-gradient(180deg, #3b82f6 0%, #8b5cf6 100%);
+            border-radius: 4px;
+        }
+        
+        /* Animations */
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+        
+        .animate-pulse {
+            animation: pulse 2s infinite;
+        }
+
+        .slide-up {
+            animation: slideUp 0.3s ease forwards;
+        }
+
+        @keyframes slideUp {
+            from {
+                transform: translateY(20px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .typing-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .typing-dot {
+            width: 4px;
+            height: 4px;
+            background-color: #ffffff;
+            border-radius: 50%;
+            animation: typingDot 1.4s infinite ease-in-out;
+        }
+
+        .typing-dot:nth-child(2) { animation-delay: 0.2s; }
+        .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+
+        @keyframes typingDot {
+            0%, 60%, 100% { transform: translateY(0); }
+            30% { transform: translateY(-4px); }
+        }
+    </style>
+</head>
+<body class="bg-slate-900">
+    <div class="flex h-screen">
+        <!-- Sidebar -->
+        <div class="flex-shrink-0 w-[var(--sidebar-width)] glass-effect p-6 overflow-y-auto">
+            <div class="flex flex-col h-full gap-6">
+                <button id="new-chat" class="w-full p-4 font-semibold gap-3 inline-flex items-center justify-center whitespace-nowrap bg-gray-800 rounded-lg hover:bg-gray-900 border-2 border-gray-800 transition">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M10 3a1 1 0 00-1 1v5H4a1 1 0 100 2h5v5a1 1 0 102 0v-5h5a1 1 0 100-2h-5V4a1 1 0 00-1-1z" clip-rule="evenodd"/>
+                    </svg>
+                    New Chat
+                </button>
+
+                <!-- Model Selector -->
+                <div class="gradient-border rounded-xl p-4">
+                    <label class="text-sm text-gray-400 mb-2 block">Select Model</label>
+                    <select id="model-selector" class="w-full bg-slate-800 rounded-lg p-3 text-white border border-gray-700 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all">
+                        <option value="gpt-4o-mini">GPT-4 Turbo Mini</option>
+                        <option value="claude">Claude 3.5 Sonnet</option>
+                        <option value="gpt-4o">GPT-4 Turbo</option>
+                        <option value="meta-llama/Meta-Llama-3.1-8B-Instruct-Turbo">Llama 3.1 8B Instruct Turbo</option>
+                        <option value="meta-llama/Meta-Llama-3.1-70B-Instruct-Turbo">Llama 3.1 70B Instruct Turbo</option>
+                        <option value="meta-llama/Meta-Llama-3.1-405B-Instruct-Turbo">Llama 3.1 405B Instruct Turbo</option>
+                        <option value="mistral-large-latest">Mistral Large</option>
+                        <option value="codestral-latest">Codestral</option>
+                        <option value="google/gemma-2-27b-it">Gemma 2 27B</option>
+                        <option value="grok-beta">Grok Beta</option>
+                    </select>
+                    <button id="system-prompt-button" class="mt-4 w-full p-4 font-semibold gap-3 inline-flex items-center justify-center whitespace-nowrap bg-gray-800 rounded-lg hover:bg-gray-900 border-2 border-gray-800 transition">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M10 3a1 1 0 00-1 1v5H4a1 1 0 100 2h5v5a1 1 0 102 0v-5h5a1 1 0 100-2h-5V4a1 1 0 00-1-1z" clip-rule="evenodd"/>
+                        </svg>
+                        System Prompt
+                    </button>
+                </div>
+
+                <div id="chat-history" class="flex-1 overflow-y-auto space-y-2">
+                    <!-- Chat history will be populated here -->
+                </div>
+                <button id="clear-history" class="w-full p-4 font-semibold gap-3 inline-flex items-center justify-center whitespace-nowrap bg-red-900/50 hover:bg-red-900/70 rounded-lg border-2 border-red-900/50 transition">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd"/>
+                    </svg>
+                    Clear All History
+                </button>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="flex-1 flex flex-col bg-slate-900">
+            <!-- Header -->
+            <header class="glass-effect shadow-lg p-4 z-10">
+                <div class="max-w-4xl mx-auto flex items-center justify-between">
+                    <h1 class="text-xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 text-transparent bg-clip-text">
+                        Ainz Chat
+                    </h1>
+                </div>
+            </header>
+
+            <!-- Chat Area -->
+            <div class="flex-1 overflow-hidden">
+                <div id="messages" class="chat-container p-6 space-y-6">
+                    <!-- Messages will be populated here -->
+                </div>
+            </div>
+
+            <!-- Input Area -->
+            <div class="glass-effect p-6 border-t border-gray-800">
+                <div class="max-w-4xl mx-auto">
+                    <form id="chat-form" class="flex gap-4">
+                        <div class="flex-1 relative">
+                            <textarea
+                                id="message-input"
+                                class="w-full bg-slate-800 rounded-xl p-4 pr-12 min-h-[52px] max-h-[200px] resize-none text-white focus:ring-2 focus:ring-blue-500 focus:outline-none border border-gray-700"
+                                placeholder="Send a message..."
+                                rows="1"
+                            ></textarea>
+                            <div id="typing-indicator" class="hidden absolute right-4 bottom-4">
+                                <div class="typing-indicator">
+                                    <div class="typing-dot"></div>
+                                    <div class="typing-dot"></div>
+                                    <div class="typing-dot"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <button 
+                            type="submit" 
+                            class="gradient-button rounded-xl px-6 py-3 font-medium text-white flex items-center gap-2"
+                        >
+                            <span>Send</span>
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z" clip-rule="evenodd"/>
+                            </svg>
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- System Prompt Modal -->
+    <div id="system-prompt-modal" class="fixed inset-0 bg-black/50 backdrop-blur-sm hidden items-center justify-center z-50">
+        <div class="glass-effect rounded-xl p-6 max-w-2xl w-full mx-4 shadow-2xl">
+            <h2 class="text-xl font-semibold mb-4">System Prompt</h2>
+            <textarea
+                id="system-prompt-input"
+                class="w-full bg-slate-800 rounded-xl p-4 min-h-[200px] max-h-[400px] resize-none text-white focus:ring-2 focus:ring-blue-500 focus:outline-none border border-gray-700"
+                placeholder="Enter system prompt..."
+            ></textarea>
+            <div class="flex justify-end gap-4 mt-4">
+                <button id="system-prompt-cancel" class="px-6 py-3 rounded-xl font-medium text-white bg-gray-800 hover:bg-gray-700 transition">
+                    Cancel
+                </button>
+                <button id="system-prompt-save" class="gradient-button px-6 py-3 rounded-xl font-medium text-white">
+                    Save
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Handle textarea auto-resize
+        const textarea = document.getElementById('message-input');
+        textarea.addEventListener('input', function() {
+            this.style.height = 'auto';
+            this.style.height = Math.min(this.scrollHeight, 200) + 'px';
+        });
+
+        // Handle Enter/Shift+Enter in textarea
+        textarea.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') {
+                if (!e.shiftKey) {
+                    e.preventDefault();
+                    chatForm.requestSubmit();
+                }
+            }
+        });
+
+        // Chat functionality
+        const chatHistory = JSON.parse(localStorage.getItem('chatHistory')) || [];
+        const messagesContainer = document.getElementById('messages');
+        const chatHistoryContainer = document.getElementById('chat-history');
+        const chatForm = document.getElementById('chat-form');
+        const newChatButton = document.getElementById('new-chat');
+        const modelSelector = document.getElementById('model-selector');
+        const typingIndicator = document.getElementById('typing-indicator');
+
+        // Load chat history
+        function loadChatHistory() {
+            chatHistoryContainer.innerHTML = '';
+            chatHistory.forEach((chat, index) => {
+                const chatButton = document.createElement('button');
+                chatButton.className = 'w-full text-left p-4 rounded-xl transition-all hover:bg-slate-800 group';
+                
+                const innerHtml = `
+                    <div class="flex items-center gap-3">
+                        <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-400 to-purple-400 flex items-center justify-center text-white text-sm">
+                            ${index + 1}
+                        </div>
+                        <span class="flex-1 truncate text-gray-300 group-hover:text-white transition-colors">
+                            ${chat.title || `Chat ${index + 1}`}
+                        </span>
+                        <button onclick="event.stopPropagation(); deleteChat(${index})" class="opacity-0 group-hover:opacity-100 transition-opacity text-red-500 hover:text-red-400">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd"/>
+                            </svg>
+                        </button>
+                    </div>
+                `;
+                
+                chatButton.innerHTML = innerHtml;
+                chatButton.onclick = () => loadChat(index);
+                chatHistoryContainer.appendChild(chatButton);
+            });
+        }
+
+        // Load specific chat
+        function loadChat(index) {
+            messagesContainer.innerHTML = '';
+            const chat = chatHistory[index];
+            if (chat) {
+                if (chat.messages) {
+                    // Update system prompt input if chat has a system message
+                    if (chat.messages[0]?.role === 'system') {
+                        systemPromptInput.value = chat.messages[0].content;
+                        localStorage.setItem('systemPrompt', chat.messages[0].content);
+                    }
+                    // Using a slight delay between messages for smooth animation
+                    chat.messages.forEach((msg, i) => {
+                        setTimeout(() => {
+                            appendMessage(msg.content, msg.role);
+                        }, i * 50); // 50ms delay between each message
+                    });
+                }
+                // Update model selector to match chat's model
+                if (chat.model) {
+                    modelSelector.value = chat.model;
+                    localStorage.setItem('lastUsedModel', chat.model);
+                }
+            }
+        }
+
+        // Append message to chat
+        function appendMessage(content, role, isLoading = false) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message-bubble flex ${role === 'user' ? 'justify-end' : 'justify-start'}`;
+
+            // Don't display system messages
+            if (role === 'system') return;
+            
+            const messageContent = document.createElement('div');
+            messageContent.className = `max-w-[80%] rounded-2xl p-4 ${
+                role === 'user'
+                    ? 'bg-gradient-to-r from-blue-500 to-purple-500 text-white'
+                    : 'glass-effect text-white'
+            }`;
+            
+            if (isLoading) {
+                messageContent.innerHTML = `
+                    <div class="typing-indicator">
+                        <div class="typing-dot"></div>
+                        <div class="typing-dot"></div>
+                        <div class="typing-dot"></div>
+                    </div>
+                `;
+            } else if (content instanceof HTMLImageElement) {
+                messageContent.appendChild(content);
+            } else {
+                messageContent.classList.add('markdown-body');
+                messageContent.innerHTML = markdown.toHTML(content);
+            }
+            
+            messageDiv.appendChild(messageContent);
+            messagesContainer.appendChild(messageDiv);
+            
+            // Trigger animation
+            setTimeout(() => {
+                messageDiv.classList.add('show');
+            }, 50);
+            
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+
+        // Handle new chat
+        function startNewChat() {
+            const systemPrompt = localStorage.getItem('systemPrompt');
+            const newChat = {
+                title: `Chat ${chatHistory.length + 1}`,
+                messages: systemPrompt ? [
+                    { role: 'system', content: systemPrompt }
+                ] : []
+            };
+            chatHistory.push(newChat);
+            localStorage.setItem('chatHistory', JSON.stringify(chatHistory));
+            loadChatHistory();
+            messagesContainer.innerHTML = '';
+
+            // Animation for new chat button
+            newChatButton.classList.add('animate-pulse');
+            setTimeout(() => {
+                newChatButton.classList.remove('animate-pulse');
+            }, 1000);
+        }
+
+        // Handle form submission
+        chatForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const message = textarea.value.trim();
+            if (!message) return;
+
+            // Clear input and adjust height
+            textarea.value = '';
+            textarea.style.height = 'auto';
+
+            // Check if message is a generate command
+            if (message.startsWith('/generate ')) {
+                const prompt = message.slice(10); // Remove "/generate " from the start
+                
+                // Display user message
+                appendMessage(message, 'user');
+
+                // Save to chat history
+                if (chatHistory.length === 0) {
+                    startNewChat();
+                }
+                const currentChat = chatHistory[chatHistory.length - 1];
+                currentChat.messages.push({ role: 'user', content: message });
+                localStorage.setItem('chatHistory', JSON.stringify(chatHistory));
+
+                try {
+                    // Show loading indicator
+                    appendMessage('', 'assistant', true);
+                    const loadingMessage = messagesContainer.lastElementChild;
+
+                    // Generate image
+                    const image = await puter.ai.txt2img(prompt);
+                    
+                    // Remove loading indicator
+                    messagesContainer.removeChild(loadingMessage);
+                    
+                    // Display generated image
+                    appendMessage(image, 'assistant');
+                    
+                    // Save to chat history
+                    currentChat.messages.push({
+                        role: 'assistant',
+                        content: `Generated image for prompt: ${prompt}`
+                    });
+                    localStorage.setItem('chatHistory', JSON.stringify(chatHistory));
+                } catch (error) {
+                    appendMessage('Sorry, there was an error generating the image. Please try again.', 'assistant');
+                    console.error('Error:', error);
+                }
+                return;
+            }
+
+            // Regular chat message handling
+            appendMessage(message, 'user');
+
+            // Save message to current chat
+            if (chatHistory.length === 0) {
+                startNewChat();
+            }
+            const currentChat = chatHistory[chatHistory.length - 1];
+            currentChat.messages.push({ role: 'user', content: message });
+            currentChat.model = modelSelector.value; // Save selected model with chat
+            localStorage.setItem('chatHistory', JSON.stringify(chatHistory));
+
+            try {
+                // Show typing indicator
+                appendMessage('', 'assistant', true);
+                const loadingMessage = messagesContainer.lastElementChild;
+
+                // Stream response
+                // Get model from current chat or model selector
+                const model = currentChat.model || modelSelector.value;
+                const systemPrompt = localStorage.getItem('systemPrompt');
+                var response;
+                    response = await puter.ai.chat(currentChat.messages, {
+                        model: model,
+                        stream: true,
+                    });
+                    // Remove loading message
+                    messagesContainer.removeChild(loadingMessage);
+
+                    // Create assistant response container
+                    const assistantMessageDiv = document.createElement('div');
+                    assistantMessageDiv.className = 'message-bubble flex justify-start';
+                    const assistantContent = document.createElement('div');
+                    assistantContent.className = 'max-w-[80%] rounded-2xl p-4 glass-effect text-white markdown-body';
+                    assistantMessageDiv.appendChild(assistantContent);
+                    messagesContainer.appendChild(assistantMessageDiv);
+
+                    // Trigger animation
+                    setTimeout(() => {
+                        assistantMessageDiv.classList.add('show');
+                    }, 50);
+
+                    let accumulatedText = '';
+                    for await (const part of response) {
+                        if (part?.text) {
+                            accumulatedText += part.text;
+                            assistantContent.innerHTML = markdown.toHTML(accumulatedText);
+                            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+                        }
+                    }
+
+                    // Save assistant response
+                    currentChat.messages.push({ role: 'assistant', content: accumulatedText });
+                    localStorage.setItem('chatHistory', JSON.stringify(chatHistory));
+                } catch (error) {
+                    appendMessage('Sorry, there was an error processing your request. Please try again.', 'assistant');
+                    console.error('Error:', error);
+                }
+            });
+
+            // Delete specific chat
+            function deleteChat(index) {
+                if (confirm('Are you sure you want to delete this chat?')) {
+                    chatHistory.splice(index, 1);
+                    localStorage.setItem('chatHistory', JSON.stringify(chatHistory));
+                    loadChatHistory();
+                    if (chatHistory.length > 0) {
+                        loadChat(chatHistory.length - 1);
+                    } else {
+                        messagesContainer.innerHTML = '';
+                    }
+                }
+            }
+    
+            // Clear all chat history
+            function clearAllHistory() {
+                if (confirm('Are you sure you want to clear all chat history? This cannot be undone.')) {
+                    chatHistory.length = 0;
+                    localStorage.setItem('chatHistory', JSON.stringify(chatHistory));
+                    loadChatHistory();
+                    messagesContainer.innerHTML = '';
+                }
+            }
+    
+            // Event Listeners
+            newChatButton.addEventListener('click', startNewChat);
+            document.getElementById('clear-history').addEventListener('click', clearAllHistory);
+            
+            modelSelector.addEventListener('change', function() {
+                // Save model selection to current chat
+                if (chatHistory.length > 0) {
+                    const currentChat = chatHistory[chatHistory.length - 1];
+                    currentChat.model = this.value;
+                    localStorage.setItem('chatHistory', JSON.stringify(chatHistory));
+                }
+    
+                // Visual feedback for model change
+                this.classList.add('ring-2', 'ring-blue-500');
+                setTimeout(() => {
+                    this.classList.remove('ring-2', 'ring-blue-500');
+                }, 500);
+            });
+    
+            // Ensure model selector updates when loading a chat
+            function updateModelSelection() {
+                if (chatHistory.length > 0) {
+                    const currentChat = chatHistory[chatHistory.length - 1];
+                    if (currentChat.model) {
+                        modelSelector.value = currentChat.model;
+                    }
+                }
+            }
+
+    // System Prompt Modal Functionality
+    const systemPromptModal = document.getElementById('system-prompt-modal');
+    const systemPromptButton = document.getElementById('system-prompt-button');
+    const systemPromptInput = document.getElementById('system-prompt-input');
+    const systemPromptCancel = document.getElementById('system-prompt-cancel');
+    const systemPromptSave = document.getElementById('system-prompt-save');
+
+    // Load saved system prompt if exists
+    systemPromptInput.value = localStorage.getItem('systemPrompt') || '';
+
+    // Open modal
+    systemPromptButton.addEventListener('click', () => {
+        systemPromptModal.classList.remove('hidden');
+        systemPromptModal.classList.add('flex');
+        systemPromptInput.focus();
+    });
+
+    // Close modal
+    function closeSystemPromptModal() {
+        systemPromptModal.classList.add('hidden');
+        systemPromptModal.classList.remove('flex');
+    }
+
+    systemPromptCancel.addEventListener('click', closeSystemPromptModal);
+
+    // Close on backdrop click
+    systemPromptModal.addEventListener('click', (e) => {
+        if (e.target === systemPromptModal) {
+            closeSystemPromptModal();
+        }
+    });
+
+    // Save system prompt
+    systemPromptSave.addEventListener('click', () => {
+        const newSystemPrompt = systemPromptInput.value;
+        localStorage.setItem('systemPrompt', newSystemPrompt);
+        
+        // Update all existing chats with new system prompt
+        chatHistory.forEach(chat => {
+            if (chat.messages.length > 0 && chat.messages[0].role === 'system') {
+                chat.messages[0].content = newSystemPrompt;
+            } else {
+                chat.messages.unshift({ role: 'system', content: newSystemPrompt });
+            }
+        });
+        localStorage.setItem('chatHistory', JSON.stringify(chatHistory));
+        
+        // Reload current chat to reflect changes
+        if (chatHistory.length > 0) {
+            loadChat(chatHistory.length - 1);
+        }
+        
+        closeSystemPromptModal();
+        
+        // Visual feedback
+        systemPromptButton.classList.add('ring-2', 'ring-blue-500');
+        setTimeout(() => {
+            systemPromptButton.classList.remove('ring-2', 'ring-blue-500');
+        }, 500);
+    });
+
+    // Initial load
+    if (chatHistory.length > 0) {
+       loadChat(chatHistory.length - 1);
+    }
+    loadChatHistory();
+    // Focus input on load
+    textarea.focus();
+</script>
+</body>
+</html>
