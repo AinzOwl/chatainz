@@ -151,7 +151,7 @@
                     <label class="text-sm text-gray-400 mb-2 block">Select Model</label>
                     <select id="model-selector" class="w-full bg-slate-800 rounded-lg p-3 text-white border border-gray-700 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all">
                         <option value="gpt-4o-mini">GPT-4 Turbo Mini</option>
-                        <option value="claude">Claude 3.5 Sonnet</option>
+                        <option value="claude-3-5-sonnet">Claude 3.5 Sonnet</option>
                         <option value="gpt-4o">GPT-4 Turbo</option>
                         <option value="meta-llama/Meta-Llama-3.1-8B-Instruct-Turbo">Llama 3.1 8B Instruct Turbo</option>
                         <option value="meta-llama/Meta-Llama-3.1-70B-Instruct-Turbo">Llama 3.1 70B Instruct Turbo</option>
@@ -206,7 +206,7 @@
                         <div class="flex-1 relative">
                             <textarea
                                 id="message-input"
-                                class="w-full bg-slate-800 rounded-xl p-4 pr-12 min-h-[52px] max-h-[200px] resize-none text-white focus:ring-2 focus:ring-blue-500 focus:outline-none border border-gray-700"
+                                class="w-full overflow-hidden bg-slate-800 rounded-xl p-4 pr-12 min-h-[52px] max-h-[200px] resize-none text-white focus:ring-2 focus:ring-blue-500 focus:outline-none border border-gray-700"
                                 placeholder="Send a message..."
                                 rows="1"
                             ></textarea>
@@ -254,6 +254,9 @@
     </div>
 
     <script>
+        // Default system prompt
+        const DEFAULT_SYSTEM_PROMPT = "you are ainzai your task is to assist user with various tasks and be a helpful assistant while keeping your responses straight and consise";
+
         // Handle textarea auto-resize
         const textarea = document.getElementById('message-input');
         textarea.addEventListener('input', function() {
@@ -378,12 +381,13 @@
 
         // Handle new chat
         function startNewChat() {
-            const systemPrompt = localStorage.getItem('systemPrompt');
+            const savedPrompt = localStorage.getItem('systemPrompt');
+            const systemPrompt = (savedPrompt && savedPrompt.trim() !== '') ? savedPrompt : DEFAULT_SYSTEM_PROMPT;
             const newChat = {
                 title: `Chat ${chatHistory.length + 1}`,
-                messages: systemPrompt ? [
+                messages: [
                     { role: 'system', content: systemPrompt }
-                ] : []
+                ]
             };
             chatHistory.push(newChat);
             localStorage.setItem('chatHistory', JSON.stringify(chatHistory));
@@ -569,8 +573,8 @@
     const systemPromptCancel = document.getElementById('system-prompt-cancel');
     const systemPromptSave = document.getElementById('system-prompt-save');
 
-    // Load saved system prompt if exists
-    systemPromptInput.value = localStorage.getItem('systemPrompt') || '';
+    // Load saved system prompt if exists, otherwise use default
+    systemPromptInput.value = localStorage.getItem('systemPrompt') || DEFAULT_SYSTEM_PROMPT;
 
     // Open modal
     systemPromptButton.addEventListener('click', () => {
